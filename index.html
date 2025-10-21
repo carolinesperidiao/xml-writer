@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>XML Writer</title>
+<link rel="stylesheet" href="./style.css" />
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+<link rel="icon" type="image/x-icon" href="xml conv.svg">
+</head>
+<body>
+  <div class="layout">
+  <div class="input_wrapper" id="input_wrapper">
+
+    <div class="input_group">
+    <button id="import_XML"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 12 12 16.5m0 0 4.5-4.5M12 16.5V3"/></svg>Import XML</button>
+    <div class="prompt-tag" id="tag_01">
+      <div class="tag-header">
+      <div class="reorder-handle">…</div>
+      <input type="text" class="tag_name" placeholder="Tag name" autocomplete="off" list="tag-name-suggestions" />
+      <button class="toggle-collapse" aria-label="Collapse or expand">▾</button>
+      </div>
+      <textarea class="tag_contents" placeholder="Tag contents" autocomplete="off"></textarea>
+      <div class="children"></div>
+      <button class="add_nested_tag"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>Add child tag</button>
+      <button class="del_tag"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673A2.25 2.25 0 0 1 15.916 21H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0A48.11 48.11 0 0 1 7.5 5.25m8.25 0c-1.58-.108-3.162-.108-4.742 0m0 0A48.11 48.11 0 0 0 7.5 5.25"/></svg>Delete tag</button>
+    </div></div>
+    
+    <div class="button_group">
+    <button id="add_tag"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>Add tag</button>
+    <button id="clear_all"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673A2.25 2.25 0 0 1 15.916 21H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0A48.11 48.11 0 0 1 7.5 5.25m8.25 0c-1.58-.108-3.162-.108-4.742 0m0 0A48.11 48.11 0 0 0 7.5 5.25"/></svg>Clear all</button>
+<span class="credits">XML Writer<br>Caroline Speridião, 2025</span>  
+  </div>
+  </div>
+
+  <div class="out_group">
+  <code id="output"></code>
+  <div id="html_output"></div>
+  <div class="button_group">
+  <button id="clipboard_copy">Copy as XML</button>
+  <button id="download_xml">Download XML</button>
+  <!-- <button id="markdown_copy">Copy as markdown</button> -->
+  <button id="html_copy">Copy as HTML</button>
+  <div class="preview_toggle_group">
+    <span>HTML preview</span>
+    <label class="switch">
+      <input type="checkbox" id="preview_toggle" />
+      <span class="slider"></span>
+    </label>
+  </div>
+  </div>
+  </div>
+</div>
+  <input type="file" id="xml_file_input" accept=".xml,text/xml" style="display:none" />
+
+  <datalist id="tag-name-suggestions"></datalist>
+
+  <script src="./app.js"></script>
+</body>
+</html>
