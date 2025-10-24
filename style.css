@@ -338,6 +338,21 @@ button:disabled {
   background: #ffffffaa;
 }
 
+/* Invalid tag name state */
+.prompt-tag input.tag_name.invalid,
+.prompt-tag input.tag_name.invalid:focus {
+  outline: none;
+  border-color: var(--rose-700);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--rose-700) 25%, transparent);
+}
+
+/* Small hint below the tag name input */
+.tag-name-hint{
+  font-size: 12px;
+  color: var(--rose-700);
+  margin: -4px 0 var(--spacing-base) 0;
+}
+
 textarea{
   transition: height .3s ease;
 }

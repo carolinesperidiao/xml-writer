@@ -22,8 +22,13 @@
 
   function normalizeTagName(raw) {
     if (!raw) return 'unnamed';
-    let s = String(raw).trim().toLowerCase().replace(/\s+/g, '_');
-    s = s.replace(/[^a-z0-9_:\-\.]/g, '_');
+    let s = String(raw).trim();
+    // Remove diacritics (e.g., á â ã ç) to base letters while preserving case
+    try {
+      s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    } catch (_) { /* ignore if normalize not supported */ }
+    s = s.replace(/\s+/g, '_');
+    s = s.replace(/[^a-zA-Z0-9_:\-\.]/g, '_');
     if (/^[0-9]/.test(s)) s = `x_${s}`;
     if (s.length === 0) s = 'unnamed';
     return s;
@@ -65,6 +70,11 @@
     inName.setAttribute('list', 'tag-name-suggestions');
     inName.value = name;
 
+    // Small hint below the field for invalid characters (initially hidden)
+    const nameHint = document.createElement('div');
+    nameHint.className = 'tag-name-hint';
+    nameHint.style.display = 'none';
+
     const ta = document.createElement('textarea');
     ta.className = 'tag_contents';
     ta.placeholder = 'Tag contents';
@@ -86,6 +96,8 @@
     headerDiv.appendChild(inName);
     headerDiv.appendChild(toggle);
     wrapper.appendChild(headerDiv);
+    // Place hint right below the input field
+    wrapper.appendChild(nameHint);
     // wrapper.appendChild(handle);
     // wrapper.appendChild(toggle);
     // wrapper.appendChild(inName);
@@ -98,6 +110,12 @@
 
     // Apply autosize behavior to this textarea
     setupAutosizeTextarea(ta);
+
+    // Wire validation for the tag name field
+    inName.addEventListener('input', () => validateTagNameInput(inName));
+    inName.addEventListener('blur', () => validateTagNameInput(inName));
+    // Initial validation state
+    validateTagNameInput(inName);
 
     return wrapper;
   }
@@ -373,6 +391,7 @@
     }
     renderXml();
     attachDatalistToAllTagNames();
+    attachValidationToAllTagNames();
   }
 
   inputWrapper.addEventListener('click', (e) => {
@@ -403,6 +422,7 @@
       }
       renderXml();
       attachDatalistToAllTagNames();
+      attachValidationToAllTagNames();
     }
 
     if (target.classList.contains('add_nested_tag')) {
@@ -413,6 +433,7 @@
       container.appendChild(child);
       renderXml();
       attachDatalistToAllTagNames();
+      attachValidationToAllTagNames();
     }
 
     if (target.classList.contains('del_tag')) {
@@ -429,6 +450,7 @@
     if (!(t instanceof HTMLElement)) return;
     if (t.classList.contains('tag_name') || t.classList.contains('tag_contents')) {
       renderXml();
+      if (t.classList.contains('tag_name')) validateTagNameInput(t);
     }
   });
 
@@ -482,7 +504,8 @@
     const children = Array.from(tagEl.querySelector(':scope > .children').children).filter((c) => c.classList.contains('prompt-tag'));
 
     const level = Math.min(6, Math.max(1, depth));
-    let html = `<h${level}>${escapeHtml(name)}</h${level}>`;
+    const displayName = name.replace(/_/g, ' ');
+    let html = `<h${level}>${escapeHtml(displayName)}</h${level}>`;
     if (text && text.trim()) {
       html += `\n<p>${escapeHtml(text.trim()).replace(/\n/g, '<br>')}</p>`;
     }
@@ -618,6 +641,45 @@
     });
   }
   attachDatalistToAllTagNames();
+
+  // Validate all existing tag name inputs and attach listeners (idempotent)
+  function attachValidationToAllTagNames() {
+    Array.from(document.querySelectorAll('input.tag_name')).forEach((el) => {
+      el.addEventListener('input', () => validateTagNameInput(el));
+      el.addEventListener('blur', () => validateTagNameInput(el));
+      validateTagNameInput(el);
+    });
+  }
+  attachValidationToAllTagNames();
+
+  // Validation: mark invalid if the input contains disallowed characters
+  function validateTagNameInput(inputEl) {
+    if (!(inputEl instanceof HTMLInputElement)) return;
+    const wrapper = inputEl.closest('.prompt-tag');
+    const hint = wrapper && wrapper.querySelector(':scope > .tag-name-hint');
+    const raw = inputEl.value || '';
+    // Allow letters (with diacritics), marks, digits, space, underscore, colon, hyphen, dot
+    let invalidMatches = null;
+    try {
+      invalidMatches = raw.match(/[^\p{L}\p{M}0-9_:\-\.\s]/gu);
+    } catch (_) {
+      invalidMatches = raw.match(/[^A-Za-zÀ-ÿ0-9_:\-\.\s]/g);
+    }
+    const isInvalid = Array.isArray(invalidMatches) && invalidMatches.length > 0;
+    inputEl.classList.toggle('invalid', !!isInvalid);
+    if (hint) {
+      if (isInvalid) {
+        const uniq = Array.from(new Set(invalidMatches)).slice(0, 10).join(' ');
+        hint.textContent = uniq
+          ? `Invalid characters: ${uniq}. Allowed: letters, numbers, spaces, _ - : .`
+          : `Allowed: letters, numbers, spaces, _ - : .`;
+        hint.style.display = 'block';
+      } else {
+        hint.textContent = '';
+        hint.style.display = 'none';
+      }
+    }
+  }
 
   // Ensure initial textareas have autosize behavior
   function attachAutosizeToAllTagContents() {
