@@ -37,10 +37,7 @@
   function escapeXml(text) {
     return String(text)
       .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&apos;');
+      .replace(/</g, '&lt;');
   }
 
   function createTagElement(name = '', contents = '') {
@@ -61,6 +58,12 @@
     toggle.setAttribute('aria-label', 'Collapse or expand');
     toggle.setAttribute('aria-expanded', 'true');
     toggle.textContent = '▾';
+
+    // Duplicate button (Bootstrap Icons bi-copy)
+    const duplicateBtn = document.createElement('button');
+    duplicateBtn.className = 'duplicate-tag';
+    duplicateBtn.setAttribute('aria-label', 'Duplicate tag');
+    duplicateBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/></svg>';
 
     const inName = document.createElement('input');
     inName.type = 'text';
@@ -94,6 +97,7 @@
 
     headerDiv.appendChild(handle);
     headerDiv.appendChild(inName);
+    headerDiv.appendChild(duplicateBtn); // place to the left of toggle
     headerDiv.appendChild(toggle);
     wrapper.appendChild(headerDiv);
     // Place hint right below the input field
@@ -407,6 +411,14 @@
       renderXml();
     }
 
+    if (target.classList.contains('duplicate-tag') || (target.closest && target.closest('.duplicate-tag'))) {
+      const btn = target.classList.contains('duplicate-tag') ? target : target.closest('.duplicate-tag');
+      const tagEl = btn && btn.closest('.prompt-tag');
+      if (!tagEl) return;
+      duplicateTag(tagEl);
+      renderXml();
+    }
+
     if (target.id === 'add_tag') {
       const tag = createTagElement('', '');
       const inputGroup = inputWrapper.querySelector(':scope > .input_group');
@@ -458,6 +470,34 @@
     convertBtn.addEventListener('click', () => {
       renderXml();
     });
+  }
+
+  function duplicateTag(tagEl) {
+    const parent = tagEl.parentElement;
+    if (!parent) return;
+    const clone = tagEl.cloneNode(true);
+    // Assign new ids to the cloned root and all descendant prompt-tags
+    const allTags = [clone, ...Array.from(clone.querySelectorAll('.prompt-tag'))];
+    allTags.forEach((pt) => { pt.id = nextTagId(); });
+    // Re-setup autosize for cloned textarea(s)
+    Array.from(clone.querySelectorAll('textarea.tag_contents')).forEach((ta) => {
+      ta.style.height = '';
+      setupAutosizeTextarea(ta);
+    });
+    // Ensure validation listeners and datalist are attached for inputs
+    Array.from(clone.querySelectorAll('input.tag_name')).forEach((inp) => {
+      inp.addEventListener('input', () => validateTagNameInput(inp));
+      inp.addEventListener('blur', () => validateTagNameInput(inp));
+      validateTagNameInput(inp);
+      if (inp.getAttribute('list') !== 'tag-name-suggestions') {
+        inp.setAttribute('list', 'tag-name-suggestions');
+      }
+    });
+    // Ensure all children containers are sortable
+    Array.from(clone.querySelectorAll('.children')).forEach((c) => makeSortable(c));
+    // Insert after original
+    if (tagEl.nextSibling) parent.insertBefore(clone, tagEl.nextSibling);
+    else parent.appendChild(clone);
   }
 
   copyBtn.addEventListener('click', async () => {
@@ -534,10 +574,7 @@
   function highlightXml(xml) {
     const esc = (s) => String(s)
       .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+      .replace(/</g, '&lt;');
     let out = '';
     let i = 0;
     while (i < xml.length) {
@@ -617,6 +654,24 @@
   Array.from(inputWrapper.querySelectorAll('.children')).forEach((c) => makeSortable(c));
   // Initial preview
   renderXml();
+  // Add duplicate buttons to any existing tags in DOM that may not have them (e.g., server-rendered)
+  Array.from(inputWrapper.querySelectorAll('.prompt-tag .tag-header')).forEach((hdr) => {
+    const hasDup = hdr.querySelector(':scope > .duplicate-tag');
+    if (!hasDup) {
+      const btn = document.createElement('button');
+      btn.className = 'duplicate-tag';
+      btn.setAttribute('aria-label', 'Duplicate tag');
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/></svg>';
+      const toggleBtn = hdr.querySelector(':scope > .toggle-collapse');
+      if (toggleBtn && toggleBtn.previousSibling) {
+        hdr.insertBefore(btn, toggleBtn);
+      } else if (toggleBtn) {
+        hdr.insertBefore(btn, toggleBtn);
+      } else {
+        hdr.appendChild(btn);
+      }
+    }
+  });
   // Preview toggle wiring
   if (previewToggle && htmlOutput) {
     const applyPreviewMode = () => {

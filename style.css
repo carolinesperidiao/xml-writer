@@ -292,7 +292,8 @@ button:disabled {
   box-shadow: 0 4px 14px rgba(20,184,166,0.12), 0 1px 0 rgba(255,255,255,0.6) inset, 0 0 0 1px rgba(20,184,166,0.12) inset;
   transition: box-shadow .2s ease, background .2s ease, border-color .2s ease;
 }
-.prompt-tag .toggle-collapse {
+.prompt-tag .toggle-collapse,
+.prompt-tag .duplicate-tag {
   background: transparent;
   color: var(--muted);
   border: none;
@@ -304,7 +305,8 @@ button:disabled {
   box-shadow: none;
   transition: .2s;
 }
-.prompt-tag .toggle-collapse:hover {
+.prompt-tag .toggle-collapse:hover,
+.prompt-tag .duplicate-tag:hover {
   background-image: radial-gradient(#fffc 0%, transparent 80%);
   background-position: 2px 2px;
   background-repeat: no-repeat;
